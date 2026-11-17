@@ -48,15 +48,13 @@
   // ---------- rendering ----------
 
   function paintRow(li, m) {
-    const eff = A.effectiveStatus(m, state.event);
-    const auto = eff === 'delayed' && m.status === 'expected';
     const isBusy = busy.has(m.id);
-    const signature = [m.code, m.name, groupLabel(m.group), state.event.groups.length, m.status, eff, m.arrivedAt, isBusy].join('|');
+    const signature = [m.code, m.name, groupLabel(m.group), state.event.groups.length, m.status, m.arrivedAt, isBusy].join('|');
     if (li.dataset.sig === signature) return;
 
     const focused = li.contains(document.activeElement) ? document.activeElement.dataset.act : null;
     li.dataset.sig = signature;
-    li.dataset.st = eff;
+    li.dataset.st = m.status;
 
     const who = el('div', 'who');
     who.append(el('span', 'code', m.code));
@@ -64,12 +62,11 @@
     nm.append(el('span', 'name', m.name));
     const sub = el('div', 'sub');
     if (state.event.groups.length > 1) sub.append(el('span', null, groupLabel(m.group))); // one list needs no label
-    if (eff !== 'expected') {
-      const pill = el('span', `pill pill-${eff}`);
-      pill.append(icon(eff === 'arrived' ? 'check' : eff === 'delayed' ? 'clock' : 'x'));
-      let text = LABEL[eff];
-      if (eff === 'arrived' && m.arrivedAt) text += ` ${A.hhmm(m.arrivedAt)}`;
-      if (auto) text += ' (past reporting time)';
+    if (m.status !== 'expected') {
+      const pill = el('span', `pill pill-${m.status}`);
+      pill.append(icon(m.status === 'arrived' ? 'check' : m.status === 'delayed' ? 'clock' : 'x'));
+      let text = LABEL[m.status];
+      if (m.status === 'arrived' && m.arrivedAt) text += ` ${A.hhmm(m.arrivedAt)}`;
       pill.append(el('span', null, text));
       sub.append(pill);
     }
@@ -78,7 +75,7 @@
 
     const acts = el('div', 'acts');
     if (m.status !== 'arrived') acts.append(actionButton('btn-ok', 'arrived', 'Arrived', 'check', isBusy));
-    if (m.status === 'expected' && !auto) acts.append(actionButton('btn-warn', 'delayed', 'Delayed', 'clock', isBusy));
+    if (m.status === 'expected') acts.append(actionButton('btn-warn', 'delayed', 'Delayed', 'clock', isBusy));
     if (m.status === 'expected' || m.status === 'delayed') acts.append(actionButton('btn-danger-ghost', 'cancelled', 'Cancelled', 'x', isBusy));
     if (m.status !== 'expected') acts.append(actionButton('btn-ghost', 'expected', 'Undo', 'undo', isBusy));
     const more = actionButton('btn-icon', 'edit', '', 'more', false);
@@ -92,7 +89,7 @@
 
   function matches(m) {
     if (filter.group !== 'all' && m.group !== filter.group) return false;
-    if (filter.status !== 'all' && A.effectiveStatus(m, state.event) !== filter.status) return false;
+    if (filter.status !== 'all' && m.status !== filter.status) return false;
     if (!filter.q) return true;
     const haystack = `${m.name} ${m.code}`.toLowerCase();
     return filter.q.split(/\s+/).every((term) => haystack.includes(term));
@@ -133,7 +130,8 @@
     $('progress').setAttribute('aria-label', `${counts.arrived} of ${counts.total} arrived`);
 
     $('who').textContent = `Logged in as ${state.auth.user}`;
-    const due = state.event.reportingAt ? new Date(state.event.reportingAt) : null;
+    const dueAt = A.dueTime(state.event); // moves on by 5 minutes each time the clock reaches it
+    const due = dueAt === null ? null : new Date(dueAt);
     $('reporting').textContent = due
       ? `Reporting time ${A.hhmm(due)}, ${due.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}`
       : 'No reporting time set';
@@ -390,7 +388,6 @@
     if (!state) return;
     $('setName').value = state.event.name;
     $('setReporting').value = toLocalInput(state.event.reportingAt);
-    $('setAuto').checked = state.event.autoDelay;
     const single = state.event.groups.length < 2;
     $('setGroupsLegend').textContent = single ? 'List name' : 'Group names';
     $('setGroups').replaceChildren(
@@ -428,7 +425,6 @@
     const result = await attempt('event', {
       name,
       reportingAt: local ? new Date(local).toISOString() : '',
-      autoDelay: $('setAuto').checked,
       groups: [...$('setGroups').querySelectorAll('input')].map((input) => ({ id: input.dataset.group, label: input.value })),
       board: {
         perScreen: Number($('setPer').value),
@@ -468,7 +464,7 @@
     };
     const lines = [['No.', 'Name', 'Group', 'Status', 'Arrived at', 'Marked by']];
     for (const m of state.members) {
-      lines.push([m.code, m.name, groupLabel(m.group), LABEL[A.effectiveStatus(m, state.event)], m.arrivedAt ? stamp(m.arrivedAt) : '', m.by || '']);
+      lines.push([m.code, m.name, groupLabel(m.group), LABEL[m.status], m.arrivedAt ? stamp(m.arrivedAt) : '', m.by || '']);
     }
     const csv = `﻿${lines.map((line) => line.map(cell).join(',')).join('\r\n')}\r\n`;
     const link = el('a');
@@ -655,6 +651,6 @@
     },
   );
 
-  // "Delayed after the reporting time" depends on the clock, so re-check regularly.
+  // The reporting time shown in the header moves with the clock, so re-check regularly.
   setInterval(render, 20000);
 })();

@@ -5,25 +5,29 @@ window.Arrivals = (() => {
   let clockOffset = 0; // server clock minus this device's clock, so every screen agrees on "now"
   let live = null;
 
+  const ROLL_MS = 5 * 60 * 1000; // how far the reporting time moves on each time the clock catches up with it
+
   const now = () => Date.now() + clockOffset;
   const pad = (n) => String(n).padStart(2, '0');
 
   /** The login page, set to come back to the page we are on. */
   const loginUrl = () => `/login?next=${encodeURIComponent(location.pathname)}`;
 
-  /** What a person shows as: anyone still "expected" after the reporting time counts as delayed. */
-  function effectiveStatus(member, event) {
-    if (member.status !== 'expected') return member.status;
-    if (event && event.autoDelay && event.reportingAt) {
-      const due = Date.parse(event.reportingAt);
-      if (!Number.isNaN(due) && now() > due) return 'delayed';
-    }
-    return 'expected';
+  /**
+   * The reporting time right now, in ms: the time set in Settings, pushed on by 5 minutes each time
+   * the clock reaches it (18:00 becomes 18:05 at 18:00, 18:10 at 18:05, ...). Null if none is set.
+   * Because it keeps moving, nobody turns Delayed by themselves; only a volunteer marks that.
+   */
+  function dueTime(event) {
+    const due = event && event.reportingAt ? Date.parse(event.reportingAt) : NaN;
+    if (Number.isNaN(due)) return null;
+    const late = now() - due;
+    return late < 0 ? due : due + (Math.floor(late / ROLL_MS) + 1) * ROLL_MS;
   }
 
   function tally(state) {
     const counts = { total: state.members.length, expected: 0, arrived: 0, delayed: 0, cancelled: 0 };
-    for (const member of state.members) counts[effectiveStatus(member, state.event)] += 1;
+    for (const member of state.members) counts[member.status] += 1;
     return counts;
   }
 
@@ -150,5 +154,5 @@ window.Arrivals = (() => {
     select.value = String(current);
   }
 
-  return { now, pad, hhmm, loginUrl, effectiveStatus, tally, post, connect, fillChoice };
+  return { now, pad, hhmm, loginUrl, dueTime, tally, post, connect, fillChoice };
 })();

@@ -266,18 +266,23 @@
   // ---------- painting ----------
 
   function paintRow(slot, m, row) {
-    const eff = m ? A.effectiveStatus(m, state.event) : 'none';
-    slot.el.dataset.st = eff;
+    slot.el.dataset.st = m ? m.status : 'none';
     const fresh = Boolean(m && m.status === 'arrived' && m.arrivedAt && A.now() - Date.parse(m.arrivedAt) < FRESH_MS);
     slot.el.classList.toggle('fresh', fresh);
     const delay = row * 16;
     write(slot.code.cells, m ? m.code : '', delay);
     write(slot.name.cells, m ? boardName(m.name) : '', delay + 30);
-    // Like an airport board: the scheduled (reporting) time until they arrive, then the actual time.
-    const scheduled = state.event.reportingAt ? A.hhmm(state.event.reportingAt) : '--:--';
-    const time = !m ? '' : m.status === 'arrived' && m.arrivedAt ? A.hhmm(m.arrivedAt) : scheduled;
+    // Like an airport board: the reporting time until they arrive, then the actual time. The
+    // reporting time moves on by 5 minutes whenever the clock reaches it, so everyone still awaited
+    // shows the new one; a cancelled person keeps the time originally set.
+    let time = '';
+    if (m && m.status === 'arrived' && m.arrivedAt) time = A.hhmm(m.arrivedAt);
+    else if (m) {
+      const due = m.status === 'cancelled' ? Date.parse(state.event.reportingAt) : A.dueTime(state.event);
+      time = due === null || Number.isNaN(due) ? '--:--' : A.hhmm(due);
+    }
     write(slot.time.cells, time, delay + 60);
-    write(slot.status.cells, m ? STATUS_TEXT[eff] : '', delay + 90);
+    write(slot.status.cells, m ? STATUS_TEXT[m.status] : '', delay + 90);
   }
 
   function renderPage() {
@@ -310,7 +315,8 @@
     $('tExpected').textContent = counts.expected;
 
     const bits = [];
-    if (state.event.reportingAt) bits.push(`Reporting time ${A.hhmm(state.event.reportingAt)}`);
+    const due = A.dueTime(state.event);
+    if (due !== null) bits.push(`Reporting time ${A.hhmm(due)}`);
     if (paused) bits.push('Paused');
     $('subRight').textContent = bits.join('  ·  ');
 
@@ -574,15 +580,22 @@
 
   // ---------- clock ----------
 
+  let shownMinute = -1;
+
   function tickClock() {
     const date = new Date(A.now());
     $('clock').textContent = `${A.pad(date.getHours())}:${A.pad(date.getMinutes())}`;
     $('date').textContent = date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).toUpperCase();
+    // Repaint as the minute turns, so the reporting time moves on the moment the clock reaches it.
+    if (date.getMinutes() !== shownMinute) {
+      shownMinute = date.getMinutes();
+      refresh();
+    }
   }
   tickClock();
   setInterval(tickClock, 1000);
 
-  // "Delayed after the reporting time" and the just-arrived highlight depend on the clock.
+  // The just-arrived highlight depends on the clock.
   setInterval(refresh, 15000);
 
   let resizeTimer = 0;
