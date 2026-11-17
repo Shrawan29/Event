@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Log in</title>
+  <link rel="icon" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/checkin.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <a class="logo" href="/" aria-label="Event Arrivals home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+    </a>
+    <h1 id="title">Log in</h1>
+    <p class="lede" id="intro">Use the ID and password you were given.</p>
+
+    <form id="form" novalidate hidden>
+      <label class="field" for="userId">
+        <span class="field-label">ID</span>
+        <input id="userId" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <span class="field-help" id="idHelp" hidden>3 to 20 characters: small letters and numbers, for example desk1.</span>
+      </label>
+
+      <label class="field" for="password">
+        <span class="field-label">Password</span>
+        <span class="password-row">
+          <input id="password" type="password" autocomplete="current-password" required>
+          <button class="btn btn-ghost" type="button" id="toggle" aria-pressed="false" aria-controls="password">Show</button>
+        </span>
+        <span class="field-help" id="passHelp" hidden>At least 8 characters.</span>
+      </label>
+
+      <p class="form-error" id="error" role="alert" hidden></p>
+      <button class="btn btn-primary btn-wide" type="submit" id="submit">Log in</button>
+    </form>
+
+    <p class="lede" id="wait">Checking…</p>
+  </main>
+
+  <script src="/assets/shared.js"></script>
+  <script src="/assets/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "event-arrivals",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Event check-in desk with an airport-style arrivals board, built for Vercel.",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev/local-server.js",
+    "start": "node dev/local-server.js --open"
+  }
+}

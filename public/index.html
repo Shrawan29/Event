@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Event Arrivals</title>
+  <link rel="icon" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/checkin.css">
+</head>
+<body class="home">
+  <main class="home-wrap">
+    <div class="home-brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+      </span>
+      <div>
+        <h1>Event Arrivals</h1>
+        <p class="lede">Check people in at the door. The board on the projector updates by itself.</p>
+      </div>
+    </div>
+
+    <div class="home-cards">
+      <a class="home-card" href="/checkin">
+        <h2>Check-in desk</h2>
+        <p>For volunteers at the entrance. Open it on a phone, tablet or laptop and mark each person Arrived, Delayed or Cancelled.</p>
+        <span class="home-go">Open the desk</span>
+      </a>
+      <a class="home-card" href="/board">
+        <h2>Arrivals board</h2>
+        <p>For the projector. An airport-style board that flips as people arrive. Press <kbd>F</kbd> for full screen.</p>
+        <span class="home-go">Open the board</span>
+      </a>
+    </div>
+
+    <section class="home-share" aria-labelledby="shareTitle">
+      <h2 id="shareTitle">Link for the volunteers</h2>
+      <div class="share-row">
+        <code id="deskUrl"></code>
+        <button class="btn btn-ghost" id="copyUrl" type="button">Copy link</button>
+      </div>
+      <p class="hint" id="copyNote" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var url = location.origin + '/checkin';
+      document.getElementById('deskUrl').textContent = url;
+      document.getElementById('copyUrl').addEventListener('click', function () {
+        var note = document.getElementById('copyNote');
+        if (!navigator.clipboard) {
+          note.textContent = 'Select the link above and copy it.';
+          return;
+        }
+        navigator.clipboard.writeText(url).then(
+          function () { note.textContent = 'Link copied. Paste it into your volunteers’ group chat.'; },
+          function () { note.textContent = 'Could not copy automatically. Select the link above and copy it.'; }
+        );
+      });
+    })();
+  </script>
+</body>
+</html>

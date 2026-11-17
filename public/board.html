@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Arrivals board</title>
+  <link rel="icon" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/board.css">
+</head>
+<body class="board-page">
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-plane" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="14" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  </svg>
+
+  <div class="frame">
+    <header class="hdr">
+      <div class="hdr-left">
+        <div class="picto" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-plane"/></svg></div>
+        <div class="hdr-titles">
+          <h1 class="t1">Arrivals</h1>
+          <p class="t2" id="eventName">&nbsp;</p>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <div class="clock" id="clock">--:--</div>
+        <div class="date" id="date">&nbsp;</div>
+      </div>
+    </header>
+
+    <div class="sub">
+      <div class="sub-left"><span id="pageLabel">&nbsp;</span><span class="dots" id="dots" aria-hidden="true"></span></div>
+      <div class="sub-right" id="subRight"></div>
+      <div class="pagebar" aria-hidden="true"><span id="pageBar"></span></div>
+    </div>
+
+    <div class="stage">
+      <main class="board" id="board" aria-label="Arrivals list"></main>
+    </div>
+
+    <footer class="ftr">
+      <div class="score" aria-live="off">
+        <div class="score-main">
+          <span class="score-label">Arrived</span>
+          <span class="score-num"><b id="tArrived">0</b><small id="tTotal">/ 0</small></span>
+        </div>
+        <div class="meter" aria-hidden="true"><span id="meterBar"></span></div>
+      </div>
+      <div class="tallies">
+        <span class="tally" style="--c: var(--st-delayed)">Delayed <b id="tDelayed">0</b></span>
+        <span class="tally" style="--c: var(--st-cancelled)">Cancelled <b id="tCancelled">0</b></span>
+        <span class="tally" style="--c: var(--st-expected)">Expected <b id="tExpected">0</b></span>
+      </div>
+      <div class="latest" id="latest"></div>
+    </footer>
+  </div>
+
+  <!-- Operator controls: appear when the mouse moves, hidden from the audience otherwise. -->
+  <div class="controls" id="controls">
+    <span class="offline" id="offline" hidden>Offline, retrying</span>
+    <button type="button" id="btnPanel"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg>Display settings</button>
+    <button type="button" id="btnSound" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg><span>Sound off</span></button>
+    <button type="button" id="btnFull"><svg class="ic" aria-hidden="true"><use href="#i-expand"/></svg><span>Full screen</span></button>
+  </div>
+
+  <aside class="panel" id="panel" aria-labelledby="panelTitle" hidden>
+    <div class="panel-head">
+      <h2 id="panelTitle">Display settings</h2>
+      <button type="button" class="panel-x" id="panelClose" aria-label="Close display settings"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+
+    <label class="pf" for="pPer">
+      <span class="pf-label">People per screen</span>
+      <select id="pPer"></select>
+      <span class="pf-help">Fewer people means bigger text. Auto fits as many as the screen holds.</span>
+    </label>
+    <label class="pf" for="pCols">
+      <span class="pf-label">Columns</span>
+      <select id="pCols"></select>
+    </label>
+    <label class="pf" for="pSecs">
+      <span class="pf-label">Time on each screen</span>
+      <select id="pSecs"></select>
+    </label>
+    <label class="pf" for="pOrder">
+      <span class="pf-label">Order of names</span>
+      <select id="pOrder"></select>
+    </label>
+
+    <p class="panel-login" id="pLogin" hidden>
+      Log in to change these settings.
+      <a id="pLoginLink" href="/login?next=/board">Log in</a>
+    </p>
+
+    <p class="panel-status" id="panelStatus" role="status" aria-live="polite"></p>
+    <p class="panel-summary" id="panelSummary"></p>
+
+    <dl class="keys">
+      <div><dt><kbd>F</kbd></dt><dd>Full screen</dd></div>
+      <div><dt><kbd>D</kbd></dt><dd>These settings</dd></div>
+      <div><dt><kbd>S</kbd></dt><dd>Arrival chime on or off</dd></div>
+      <div><dt><kbd>Space</kbd></dt><dd>Pause on this screen</dd></div>
+      <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Previous or next screen</dd></div>
+    </dl>
+  </aside>
+
+  <div class="announce" id="announce" aria-live="polite">
+    <div class="ann-band">
+      <div class="ann-tag"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-plane"/></svg><span>Just landed</span></div>
+      <div class="ann-name" id="annName"></div>
+      <div class="ann-meta" id="annMeta"></div>
+    </div>
+  </div>
+
+  <div class="notice" id="notice" hidden>
+    <h2 id="noticeTitle">Connecting</h2>
+    <p id="noticeText"></p>
+  </div>
+
+  <script src="/assets/shared.js"></script>
+  <script src="/assets/board.js"></script>
+</body>
+</html>
