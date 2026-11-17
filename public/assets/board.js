@@ -273,7 +273,10 @@
     const delay = row * 16;
     write(slot.code.cells, m ? m.code : '', delay);
     write(slot.name.cells, m ? boardName(m.name) : '', delay + 30);
-    write(slot.time.cells, m && m.status === 'arrived' && m.arrivedAt ? A.hhmm(m.arrivedAt) : '', delay + 60);
+    // Like an airport board: the scheduled (reporting) time until they arrive, then the actual time.
+    const scheduled = state.event.reportingAt ? A.hhmm(state.event.reportingAt) : '--:--';
+    const time = !m ? '' : m.status === 'arrived' && m.arrivedAt ? A.hhmm(m.arrivedAt) : scheduled;
+    write(slot.time.cells, time, delay + 60);
     write(slot.status.cells, m ? STATUS_TEXT[eff] : '', delay + 90);
   }
 

@@ -322,12 +322,18 @@ html:has(.board-page) {
   color: var(--st-expected);
 }
 
+/* Scheduled time is soft white; it turns green when it becomes the actual arrival time. */
+.g-time b {
+  color: var(--st-expected);
+}
+
 .row[data-st="arrived"] .g-time b {
   color: var(--st-arrived);
 }
 
 .row[data-st="cancelled"] .g-code b,
-.row[data-st="cancelled"] .g-name b {
+.row[data-st="cancelled"] .g-name b,
+.row[data-st="cancelled"] .g-time b {
   opacity: 0.45;
 }
 
